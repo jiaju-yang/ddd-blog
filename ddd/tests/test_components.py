@@ -83,6 +83,20 @@ class TestValueObject:
         with pytest.raises(TypeError):
             AVO(1, c=1)
 
+    def test_check_attr_type(self):
+        class AVO(ValueObject):
+            a = Attr(type=int)
+            b = Attr(type=str)
+
+        with pytest.raises(ValueError):
+            AVO('x', 'y')
+
+        with pytest.raises(ValueError):
+            AVO(1, 1)
+
+        with pytest.raises(ValueError):
+            AVO('x', 1)
+
     def test_repr(self):
         class AVO(ValueObject):
             a = Attr()

@@ -1,5 +1,3 @@
-import functools
-
 __all__ = ('Attr', 'DomainModel', 'ValueObject', 'Entity')
 
 
@@ -40,7 +38,7 @@ class Attr:
         self.default = default
         self.validators = []
         if type:
-            self.validators.append(functools.partial(isinstance, A_tuple=type))
+            self.validators.append(lambda value: isinstance(value, type))
         if isinstance(validator, (tuple, list)):
             for validate in validator:
                 if not callable(validate):
@@ -72,7 +70,9 @@ class Attr:
             raise AttributeError('Can not set attribute!')
         for validate in self.validators:
             if not validate(value):
-                raise ValueError(f'Incorrect value {value} for {self.name}')
+                raise ValueError(
+                    f"Incorrect value '{value}' for attribute '{self.name}' in "
+                    f"'{instance.__class__.__name__}' object")
         instance.__dict__[self.name] = value
 
     @property
