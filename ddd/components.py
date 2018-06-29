@@ -56,7 +56,15 @@ class Attr:
     def __get__(self, instance, owner):
         if instance is None:
             return self
-        return instance.__dict__[self.name]
+        try:
+            return instance.__dict__[self.name]
+        except KeyError:
+            if self.default is NOTHING:
+                raise AttributeError(
+                    f"'{self.__class__.__name__}' object has no attribute "
+                    f"'{self.name}'")
+            else:
+                return self.default
 
     def __set__(self, instance, value):
         if getattr(instance.__class__, '__frozen__', False) and \
@@ -66,6 +74,10 @@ class Attr:
             if not validate(value):
                 raise ValueError(f'Incorrect value {value} for {self.name}')
         instance.__dict__[self.name] = value
+
+    @property
+    def is_required(self):
+        return self.default is NOTHING
 
 
 class _ClassBuilder:
@@ -111,6 +123,20 @@ class DomainModel(metaclass=_ModelMeta):
     def __init__(self, *args, **kwargs):
         pos_args = {a.name: value for a, value in zip(self.__attrs__, args)}
         all_args = {**pos_args, **kwargs}
+
+        duplicated_args = set(pos_args.keys()) & set(kwargs.keys())
+        if duplicated_args:
+            raise TypeError(f"__init__() got multiple values for argument "
+                            f"'{', '.join(duplicated_args)}'")
+
+        missing_required_attrs = set(self._required_attrs()) - set(
+            all_args.keys())
+        if missing_required_attrs:
+            raise TypeError(
+                f"__init__() missing {len(missing_required_attrs)} required "
+                f"positional argument: "
+                f"'{', '.join(missing_required_attrs)}'")
+
         for key, value in all_args.items():
             setattr(self, key, value)
         self.__initialized__ = True
@@ -129,6 +155,14 @@ class DomainModel(metaclass=_ModelMeta):
         for attr_name in hash_attr_names:
             hash_items.append(getattr(self, attr_name, NOTHING))
         return hash(tuple(hash_items))
+
+    @classmethod
+    def _default_attrs(cls):
+        return tuple(a.name for a in cls.__attrs__ if not a.is_required)
+
+    @classmethod
+    def _required_attrs(cls):
+        return tuple(a.name for a in cls.__attrs__ if a.is_required)
 
 
 class Entity(DomainModel):

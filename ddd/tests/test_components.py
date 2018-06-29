@@ -1,4 +1,6 @@
-from ddd import Attr, DomainModel, ValueObject
+import pytest
+
+from ddd import Attr, ValueObject
 
 
 class TestValueObject:
@@ -26,14 +28,70 @@ class TestValueObject:
         assert avo.g == {'k'}
         assert avo.h == AnotherVO('c')
 
-    def test_repr(self):
-        class AVO(DomainModel):
-            x = Attr()
-            y = Attr()
-            z = Attr()
+    def test_default_attribute(self):
+        class AVO(ValueObject):
+            a = Attr()
+            b = Attr(default=1)
 
-        avo = AVO('a', 1, ['b'])
-        assert repr(avo) == """AVO(x='a', y=1, z=['b'])"""
+        avo = AVO('x')
+        assert avo.a == 'x'
+        assert avo.b == 1
+
+        avo = AVO('x', 2)
+        assert avo.a == 'x'
+        assert avo.b == 2
+
+    def test_incorrect_default_order(self):
+        with pytest.raises(ValueError):
+            class AVO(ValueObject):
+                a = Attr(default=5)
+                b = Attr()
+
+        with pytest.raises(ValueError):
+            class AnotherVO(ValueObject):
+                a = Attr()
+                b = Attr(default=None)
+                c = Attr()
+
+    def test_duplicated_attr_instantiation(self):
+        class AVO(ValueObject):
+            a = Attr()
+            b = Attr()
+            c = Attr(default=1)
+
+        with pytest.raises(TypeError):
+            AVO('x', 'y', a='z')
+
+        with pytest.raises(TypeError):
+            AVO('x', 'y', b='z')
+
+        with pytest.raises(TypeError):
+            AVO('x', 'y', 2, c=3)
+
+    def test_miss_required_attrs(self):
+        class AVO(ValueObject):
+            a = Attr()
+            b = Attr()
+            c = Attr(default=5)
+
+        with pytest.raises(TypeError):
+            AVO()
+
+        with pytest.raises(TypeError):
+            AVO(b=1, c=1)
+
+        with pytest.raises(TypeError):
+            AVO(1, c=1)
+
+    def test_repr(self):
+        class AVO(ValueObject):
+            a = Attr()
+            b = Attr()
+            c = Attr()
+
+        avo = AVO('x', 1, ['y'])
+        assert repr(avo) == """AVO(a='x', b=1, c=['y'])"""
+
     # @pytest.fixture(scope='function')
     # def a_value_object(self):
     #     class AVO(ValueObject):
