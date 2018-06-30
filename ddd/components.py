@@ -149,13 +149,6 @@ class DomainModel(metaclass=_ModelMeta):
         result = [self.__class__.__name__, '(', ', '.join(attrs_pair), ')']
         return ''.join(result)
 
-    def __hash__(self):
-        hash_attr_names = (a.name for a in self.__attrs__ if a.hash)
-        hash_items = [self.__class__.__module__, self.__class__.__name__]
-        for attr_name in hash_attr_names:
-            hash_items.append(getattr(self, attr_name, NOTHING))
-        return hash(tuple(hash_items))
-
     @classmethod
     def _default_attrs(cls):
         return tuple(a.name for a in cls.__attrs__ if not a.is_required)
@@ -179,3 +172,10 @@ class ValueObject(DomainModel):
             if getattr(self, a.name) != getattr(other, a.name):
                 return False
         return True
+
+    def __hash__(self):
+        hash_attr_names = (a.name for a in self.__attrs__ if a.hash)
+        hash_items = [self.__class__]
+        for attr_name in hash_attr_names:
+            hash_items.append(getattr(self, attr_name, NOTHING))
+        return hash(tuple(hash_items))

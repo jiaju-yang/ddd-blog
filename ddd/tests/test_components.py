@@ -97,6 +97,17 @@ class TestValueObject:
         with pytest.raises(ValueError):
             AVO('x', 1)
 
+    def test_hash(self):
+        class AVO(ValueObject):
+            a = Attr()
+
+        class AnotherVO(ValueObject):
+            a = Attr()
+
+        assert hash(AVO('x')) != hash(AVO('y'))
+        assert hash(AVO('x')) == hash(AVO('x'))
+        assert hash(AVO('x')) != hash(AnotherVO('x'))
+
     def test_repr(self):
         class AVO(ValueObject):
             a = Attr()
