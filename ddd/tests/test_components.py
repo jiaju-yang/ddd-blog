@@ -43,6 +43,17 @@ class TestValueObject:
         assert avo.a == 'x'
         assert avo.b == 2
 
+    def test_factory_of_default_attribute(self):
+        class AVO(ValueObject):
+            a = Attr(default=5)
+            b = Attr(default=list)
+
+        avo = AVO()
+        another_vo = AVO()
+        assert avo.a == 5
+        assert avo.b == another_vo.b == []
+        assert avo.b is not another_vo
+
     def test_incorrect_default_order(self):
         with pytest.raises(ValueError):
             class AVO(ValueObject):

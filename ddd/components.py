@@ -34,7 +34,8 @@ class Attr:
                  validator=None,
                  hash=True):
         self.type = type
-        self.default = default
+        self.default = Factory(default)
+
         self.validators = []
         if type:
             self.validators.append(
@@ -48,6 +49,7 @@ class Attr:
             if not callable(validator):
                 raise TypeError('Validator should be callable!')
             self.validators.append(validator)
+
         self.hash = hash
         self.name = None
 
@@ -57,7 +59,7 @@ class Attr:
         try:
             return instance.__dict__[self.name]
         except KeyError:
-            return self.default
+            return self.default()
 
     def __set__(self, instance, value):
         if getattr(instance.__class__, '__frozen__', False) and \
@@ -72,13 +74,31 @@ class Attr:
 
     @property
     def is_required(self):
-        return self.default is NOTHING
+        return self.default.is_nothing
 
     def validator(self, func):
         if not callable(func):
             raise TypeError()
         self.validators.append(func)
         return func
+
+
+class Factory:
+    def __init__(self, default):
+        if callable(default):
+            self._factory = default
+        else:
+            self._default = default
+
+    def __call__(self):
+        if hasattr(self, '_factory'):
+            return self._factory()
+        else:
+            return self._default
+
+    @property
+    def is_nothing(self):
+        return getattr(self, '_default', None) is NOTHING
 
 
 class _ClassBuilder:
@@ -101,12 +121,12 @@ class _ClassBuilder:
         had_default = False
         for name, attr in cls.__dict__.items():
             if isinstance(attr, Attr):
-                if had_default and attr.default is NOTHING:
+                if had_default and attr.is_required:
                     raise ValueError(
                         "No mandatory attributes allowed after an attribute "
                         "with a default value or factory. Attribute in "
                         f"question: {name}")
-                elif not had_default and attr.default is not NOTHING:
+                elif not had_default and not attr.is_required:
                     had_default = True
                 attr.name = name
                 attrs.append(attr)
