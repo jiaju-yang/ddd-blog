@@ -206,6 +206,32 @@ class TestValueObject:
             'h': {'x': 'c'}
         }
 
+    def test_asdict_rename(self):
+        class AVO(ValueObject):
+            a = Attr()
+            b = Attr()
+            c = Attr()
+            d = Attr()
+            e = Attr()
+            f = Attr()
+            g = Attr()
+            h = Attr()
+
+        class AnotherVO(ValueObject):
+            x = Attr()
+
+        avo = AVO('x', 1, 2.1, ('k',), {'k': 'v'}, ['k'], {'k'}, AnotherVO('c'))
+        assert avo._asdict(g='i', h='j') == {
+            'a': 'x',
+            'b': 1,
+            'c': 2.1,
+            'd': ('k',),
+            'e': {'k': 'v'},
+            'f': ['k'],
+            'i': {'k'},
+            'j': {'x': 'c'}
+        }
+
     def test_iterable(self):
         class AVO(ValueObject):
             a = Attr()

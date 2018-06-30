@@ -154,10 +154,11 @@ class DomainModel(metaclass=_ModelMeta):
         result = {}
         for a in self.__attrs__:
             value = getattr(self, a.name)
+            name = rename.get(a.name) or a.name
             if isinstance(value, DomainModel):
-                result[a.name] = value._asdict()
+                result[name] = value._asdict()
             else:
-                result[a.name] = value
+                result[name] = value
         return result
 
     def __iter__(self):
