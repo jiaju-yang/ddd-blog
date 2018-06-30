@@ -138,6 +138,12 @@ class DomainModel(metaclass=_ModelMeta):
                 f"positional argument: "
                 f"'{', '.join(missing_required_attrs)}'")
 
+        redundant_attrs = set(all_args) - set(a.name for a in self.__attrs__)
+        if redundant_attrs:
+            raise TypeError(
+                f"__init__() got an unexpected keyword argument "
+                f"'{', '.join(tuple(redundant_attrs))}'")
+
         for key, value in all_args.items():
             setattr(self, key, value)
         self.__initialized__ = True
@@ -195,3 +201,8 @@ class ValueObject(DomainModel):
         for attr_name in hash_attr_names:
             hash_items.append(getattr(self, attr_name, NOTHING))
         return hash(tuple(hash_items))
+
+    def _new(self, **kwargs):
+        new = {a.name: getattr(self, a.name) for a in self.__attrs__}
+        new.update(kwargs)
+        return self.__class__(**new)

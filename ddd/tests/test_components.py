@@ -70,6 +70,13 @@ class TestValueObject:
         with pytest.raises(TypeError):
             AVO('x', 'y', 2, c=3)
 
+    def test_redundant_attr_instantiation(self):
+        class AVO(ValueObject):
+            a = Attr()
+
+        with pytest.raises(TypeError):
+            AVO(1, b=2)
+
     def test_miss_required_attrs(self):
         class AVO(ValueObject):
             a = Attr()
@@ -249,43 +256,27 @@ class TestValueObject:
         avo = AVO('x', 1, 2.1, ('k',), {'k': 'v'}, ['k'], {'k'}, AnotherVO('c'))
         assert tuple(avo) == (
             'x', 1, 2.1, ('k',), {'k': 'v'}, ['k'], {'k'}, AnotherVO(x='c'))
-    # @pytest.fixture(scope='function')
-    # def a_value_object(self):
-    #     class AVO(ValueObject):
-    #         a = Attr(type=int, default=1)
-    #         b = Attr(type=str, required=True)
-    #
-    #         # def __init__(self, x, y, z):
-    #         #     pass
-    #
-    #         # def __new__(cls, *args, **kwargs):
-    #         #     pass
-    #         # @validator
-    #         # def x(self, value):
-    #         #     if len(value) > 10:
-    #         #         return False
-    #
-    #     return AVO('xxx', a=None, b=2, e='s')
 
-    # def test_str(self):
+    def test_new(self):
+        class AVO(ValueObject):
+            a = Attr()
+            b = Attr()
+            c = Attr()
+            d = Attr()
+            e = Attr()
+            f = Attr()
+            g = Attr()
+            h = Attr()
 
-    # def test_correct_instantiation(self, a_value_object):
-    #     assert a_value_object.x == 1
-    #     assert a_value_object.z == 's'
-    #     assert a_value_object.y is None
-    #     with pytest.raises(AttributeError):
-    #         a_value_object.x = 2
-    #     with pytest.raises(AttributeError):
-    #         a_value_object.y = 2
-    #
-    # def test_replace(self, a_value_object):
-    #     another_value_object = a_value_object._replace(y=3)
-    #
-    #     assert a_value_object.x == 1
-    #     assert a_value_object.y is None
-    #     assert another_value_object.x == 1
-    #     assert another_value_object.y == 3
-    #     assert a_value_object is not another_value_object
-    #
-    #     with pytest.raises(ValueError):
-    #         a_value_object._replace(z=1)
+        class AnotherVO(ValueObject):
+            x = Attr()
+
+        avo = AVO('x', 1, 2.1, ('k',), {'k': 'v'}, ['k'], {'k'}, AnotherVO('c'))
+        new = avo._new(c=3)
+
+        assert avo.c == 2.1
+        assert new.c == 3
+        assert avo is not new
+
+        with pytest.raises(TypeError):
+            avo._new(i=1)
