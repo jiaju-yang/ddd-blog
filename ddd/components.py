@@ -32,8 +32,7 @@ class Attr:
                  type=None,
                  default=NOTHING,
                  validator=None,
-                 hash=True,
-                 frozen=NOTHING):
+                 hash=True):
         self.type = type
         self.default = default
         self.validators = []

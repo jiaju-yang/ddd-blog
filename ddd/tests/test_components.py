@@ -100,13 +100,33 @@ class TestValueObject:
     def test_hash(self):
         class AVO(ValueObject):
             a = Attr()
+            b = Attr(hash=False)
 
         class AnotherVO(ValueObject):
             a = Attr()
+            b = Attr(hash=False)
 
-        assert hash(AVO('x')) != hash(AVO('y'))
-        assert hash(AVO('x')) == hash(AVO('x'))
-        assert hash(AVO('x')) != hash(AnotherVO('x'))
+        assert hash(AVO('x', 'y')) != hash(AVO('y', 'y'))
+        assert hash(AVO('x', 'y')) == hash(AVO('x', 'z'))
+        assert hash(AVO('x', 'y')) != hash(AnotherVO('x', 'y'))
+
+    def test_eq(self):
+        class AVO(ValueObject):
+            a = Attr()
+            b = Attr()
+
+        class AnotherVO(ValueObject):
+            a = Attr()
+            b = Attr()
+
+        vo1 = AVO('x', 'y')
+        vo2 = AVO('x', 'y')
+        another_vo = AnotherVO('x', 'y')
+
+        assert vo1 == vo2
+        assert vo1 is not vo2
+        assert vo1 != another_vo
+        assert vo1 is not another_vo
 
     def test_repr(self):
         class AVO(ValueObject):
