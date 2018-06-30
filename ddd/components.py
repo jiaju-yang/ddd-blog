@@ -160,6 +160,10 @@ class DomainModel(metaclass=_ModelMeta):
                 result[a.name] = value
         return result
 
+    def __iter__(self):
+        for a in self.__attrs__:
+            yield getattr(self, a.name)
+
     @classmethod
     def _default_attrs(cls):
         return tuple(a.name for a in cls.__attrs__ if not a.is_required)

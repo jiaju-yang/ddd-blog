@@ -194,8 +194,7 @@ class TestValueObject:
         class AnotherVO(ValueObject):
             x = Attr()
 
-        avo = AVO('x', 1, 2.1, ('k',), {'k': 'v'}, ['k'], {'k'},
-                  AnotherVO('c'))
+        avo = AVO('x', 1, 2.1, ('k',), {'k': 'v'}, ['k'], {'k'}, AnotherVO('c'))
         assert avo._asdict() == {
             'a': 'x',
             'b': 1,
@@ -207,6 +206,23 @@ class TestValueObject:
             'h': {'x': 'c'}
         }
 
+    def test_iterable(self):
+        class AVO(ValueObject):
+            a = Attr()
+            b = Attr()
+            c = Attr()
+            d = Attr()
+            e = Attr()
+            f = Attr()
+            g = Attr()
+            h = Attr()
+
+        class AnotherVO(ValueObject):
+            x = Attr()
+
+        avo = AVO('x', 1, 2.1, ('k',), {'k': 'v'}, ['k'], {'k'}, AnotherVO('c'))
+        assert tuple(avo) == (
+            'x', 1, 2.1, ('k',), {'k': 'v'}, ['k'], {'k'}, AnotherVO(x='c'))
     # @pytest.fixture(scope='function')
     # def a_value_object(self):
     #     class AVO(ValueObject):
