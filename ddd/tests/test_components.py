@@ -1,3 +1,5 @@
+import numbers
+
 import pytest
 
 from ddd import Attr, ValueObject
@@ -136,6 +138,47 @@ class TestValueObject:
 
         avo = AVO('x', 1, ['y'])
         assert repr(avo) == """AVO(a='x', b=1, c=['y'])"""
+
+    def test_validator(self):
+        class AVO(ValueObject):
+            a = Attr(type=numbers.Real,
+                     validator=lambda instance, value: 0 < value < 100)
+
+        with pytest.raises(ValueError):
+            AVO('x')
+
+        with pytest.raises(ValueError):
+            AVO(0)
+
+        with pytest.raises(ValueError):
+            AVO(100)
+
+        AVO(99)
+
+    def test_validator_decorator(self):
+        class AVO(ValueObject):
+            a = Attr()
+
+            @a.validator
+            def is_integer(self, value):
+                if isinstance(value, numbers.Integral):
+                    return True
+                raise TypeError()
+
+            @a.validator
+            def between(self, value):
+                return 0 < value < 100
+
+        with pytest.raises(TypeError):
+            AVO('c')
+
+        with pytest.raises(ValueError):
+            AVO(0)
+
+        with pytest.raises(ValueError):
+            AVO(100)
+
+        AVO(99)
 
     # @pytest.fixture(scope='function')
     # def a_value_object(self):

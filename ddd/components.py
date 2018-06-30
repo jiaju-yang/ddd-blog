@@ -37,7 +37,8 @@ class Attr:
         self.default = default
         self.validators = []
         if type:
-            self.validators.append(lambda value: isinstance(value, type))
+            self.validators.append(
+                lambda instance, value: isinstance(value, type))
         if isinstance(validator, (tuple, list)):
             for validate in validator:
                 if not callable(validate):
@@ -56,19 +57,14 @@ class Attr:
         try:
             return instance.__dict__[self.name]
         except KeyError:
-            if self.default is NOTHING:
-                raise AttributeError(
-                    f"'{self.__class__.__name__}' object has no attribute "
-                    f"'{self.name}'")
-            else:
-                return self.default
+            return self.default
 
     def __set__(self, instance, value):
         if getattr(instance.__class__, '__frozen__', False) and \
                 getattr(instance, '__initialized__', False):
             raise AttributeError('Can not set attribute!')
         for validate in self.validators:
-            if not validate(value):
+            if not validate(instance, value):
                 raise ValueError(
                     f"Incorrect value '{value}' for attribute '{self.name}' in "
                     f"'{instance.__class__.__name__}' object")
@@ -77,6 +73,12 @@ class Attr:
     @property
     def is_required(self):
         return self.default is NOTHING
+
+    def validator(self, func):
+        if not callable(func):
+            raise TypeError()
+        self.validators.append(func)
+        return func
 
 
 class _ClassBuilder:
