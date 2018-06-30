@@ -180,6 +180,33 @@ class TestValueObject:
 
         AVO(99)
 
+    def test_asdict(self):
+        class AVO(ValueObject):
+            a = Attr()
+            b = Attr()
+            c = Attr()
+            d = Attr()
+            e = Attr()
+            f = Attr()
+            g = Attr()
+            h = Attr()
+
+        class AnotherVO(ValueObject):
+            x = Attr()
+
+        avo = AVO('x', 1, 2.1, ('k',), {'k': 'v'}, ['k'], {'k'},
+                  AnotherVO('c'))
+        assert avo._asdict() == {
+            'a': 'x',
+            'b': 1,
+            'c': 2.1,
+            'd': ('k',),
+            'e': {'k': 'v'},
+            'f': ['k'],
+            'g': {'k'},
+            'h': {'x': 'c'}
+        }
+
     # @pytest.fixture(scope='function')
     # def a_value_object(self):
     #     class AVO(ValueObject):

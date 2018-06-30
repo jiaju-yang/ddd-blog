@@ -150,6 +150,16 @@ class DomainModel(metaclass=_ModelMeta):
         result = [self.__class__.__name__, '(', ', '.join(attrs_pair), ')']
         return ''.join(result)
 
+    def _asdict(self, **rename):
+        result = {}
+        for a in self.__attrs__:
+            value = getattr(self, a.name)
+            if isinstance(value, DomainModel):
+                result[a.name] = value._asdict()
+            else:
+                result[a.name] = value
+        return result
+
     @classmethod
     def _default_attrs(cls):
         return tuple(a.name for a in cls.__attrs__ if not a.is_required)
