@@ -280,3 +280,12 @@ class TestValueObject:
 
         with pytest.raises(TypeError):
             avo._new(i=1)
+
+    def test_immutable(self):
+        class AVO(ValueObject):
+            a = Attr()
+            b = Attr()
+
+        avo = AVO(1, 2)
+        with pytest.raises(AttributeError):
+            avo.a = 3
