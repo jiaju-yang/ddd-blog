@@ -1,3 +1,5 @@
+from itertools import chain
+
 __all__ = ('Attr', 'DomainModel', 'ValueObject', 'Entity')
 
 
@@ -102,12 +104,20 @@ class Factory:
 
 
 class _Attrs:
-    def __init__(self, attrs):
-        self.all = tuple(attrs)
+    def __init__(self, attrs=()):
+        self._all = tuple(attrs)
 
     @property
     def required(self):
-        return (a for a in self.all if a.is_required)
+        return tuple(a.name for a in self._all if a.is_required)
+
+    @property
+    def all(self):
+        return tuple(a.name for a in self._all)
+
+    @property
+    def hash(self):
+        return tuple(a.name for a in self._all if a.hash)
 
 
 class _ModelMeta(type):
@@ -137,7 +147,7 @@ class _ModelMeta(type):
 
 class DomainModel(metaclass=_ModelMeta):
     def __init__(self, *args, **kwargs):
-        pos_args = {a.name: value for a, value in zip(self.__attrs__.all, args)}
+        pos_args = dict(zip(self._attrs, args))
         all_args = {**pos_args, **kwargs}
 
         duplicated_args = set(pos_args.keys()) & set(kwargs.keys())
@@ -145,16 +155,15 @@ class DomainModel(metaclass=_ModelMeta):
             raise TypeError(f"__init__() got multiple values for argument "
                             f"'{', '.join(duplicated_args)}'")
 
-        missing_required_attrs = set(
-            a.name for a in self.__attrs__.required) - set(all_args.keys())
+        missing_required_attrs = set(self._required_attrs) - set(
+            all_args.keys())
         if missing_required_attrs:
             raise TypeError(
                 f"__init__() missing {len(missing_required_attrs)} required "
                 f"positional argument: "
                 f"'{', '.join(missing_required_attrs)}'")
 
-        redundant_attrs = set(all_args) - set(
-            a.name for a in self.__attrs__.all)
+        redundant_attrs = set(all_args) - set(self._attrs)
         if redundant_attrs:
             raise TypeError(
                 f"__init__() got an unexpected keyword argument "
@@ -166,17 +175,17 @@ class DomainModel(metaclass=_ModelMeta):
 
     def __repr__(self):
         attrs_pair = []
-        for a in self.__attrs__.all:
+        for a in self._attrs:
             attrs_pair.append(('{}={}'.format(
-                a.name, repr(getattr(self, a.name, NOTHING)))))
+                a, repr(getattr(self, a, NOTHING)))))
         result = [self.__class__.__name__, '(', ', '.join(attrs_pair), ')']
         return ''.join(result)
 
     def _asdict(self, **rename):
         result = {}
-        for a in self.__attrs__.all:
-            value = getattr(self, a.name)
-            name = rename.get(a.name) or a.name
+        for a in self._attrs:
+            value = getattr(self, a)
+            name = rename.get(a) or a
             if isinstance(value, DomainModel):
                 result[name] = value._asdict()
             else:
@@ -184,8 +193,30 @@ class DomainModel(metaclass=_ModelMeta):
         return result
 
     def __iter__(self):
-        for a in self.__attrs__.all:
-            yield getattr(self, a.name)
+        yield from (getattr(self, attr) for attr in self._attrs)
+
+    @property
+    def _attrs(self):
+        return tuple(chain.from_iterable(a.all
+                                         for a in self.__attr_descriptors()))
+
+    @property
+    def _required_attrs(self):
+        return tuple(chain.from_iterable(a.required
+                                         for a in self.__attr_descriptors()))
+
+    @property
+    def _hash_attrs(self):
+        return tuple(chain.from_iterable(a.hash
+                                         for a in self.__attr_descriptors()))
+
+    @classmethod
+    def __attr_descriptors(cls):
+        none_attrs = _Attrs()
+        return (
+            getattr(cls, '__attrs__', none_attrs)
+            for cls in reversed(cls.__mro__[: -1])
+        )
 
 
 class Entity(DomainModel):
@@ -198,19 +229,18 @@ class ValueObject(DomainModel):
     def __eq__(self, other):
         if self.__class__ != other.__class__:
             return False
-        for a in self.__attrs__.all:
-            if getattr(self, a.name) != getattr(other, a.name):
+        for a in self._attrs:
+            if getattr(self, a) != getattr(other, a):
                 return False
         return True
 
     def __hash__(self):
-        hash_attr_names = (a.name for a in self.__attrs__.all if a.hash)
         hash_items = [self.__class__]
-        for attr_name in hash_attr_names:
-            hash_items.append(getattr(self, attr_name, NOTHING))
+        for a in self._hash_attrs:
+            hash_items.append(getattr(self, a, NOTHING))
         return hash(tuple(hash_items))
 
     def _new(self, **kwargs):
-        new = {a.name: getattr(self, a.name) for a in self.__attrs__.all}
+        new = {a: getattr(self, a) for a in self._attrs}
         new.update(kwargs)
         return self.__class__(**new)

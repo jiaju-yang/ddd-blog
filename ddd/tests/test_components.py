@@ -30,6 +30,26 @@ class TestValueObject:
         assert avo.g == {'k'}
         assert avo.h == AnotherVO('c')
 
+    def test_instantiate_inherited_object(self):
+        class GrandmaVO(ValueObject):
+            a = Attr()
+            b = Attr()
+
+        class FatherVO(GrandmaVO):
+            c = Attr()
+            d = Attr()
+
+        class MotherVO(GrandmaVO):
+            e = Attr()
+            f = Attr()
+
+        class ChildVO(MotherVO, FatherVO):
+            g = Attr()
+            h = Attr()
+
+        avo = ChildVO(1, 2, 3, 4, 5, 6, 7, 8)
+        assert tuple(avo) == (1, 2, 3, 4, 5, 6, 7, 8)
+
     def test_default_attribute(self):
         class AVO(ValueObject):
             a = Attr()
@@ -300,3 +320,23 @@ class TestValueObject:
         avo = AVO(1, 2)
         with pytest.raises(AttributeError):
             avo.a = 3
+
+    def test_attrs(self):
+        class GrandmaVO(ValueObject):
+            a = Attr()
+            b = Attr()
+
+        class FatherVO(GrandmaVO):
+            c = Attr()
+            d = Attr()
+
+        class MotherVO(GrandmaVO):
+            e = Attr()
+            f = Attr()
+
+        class ChildVO(MotherVO, FatherVO):
+            g = Attr()
+            h = Attr()
+
+        vo = ChildVO(1, 2, 3, 4, 5, 6, 7, 8)
+        assert vo._attrs == ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')
