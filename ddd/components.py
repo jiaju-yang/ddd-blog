@@ -74,7 +74,7 @@ class Attr:
 
     @property
     def is_required(self):
-        return self.default.is_nothing
+        return not self.default.is_defined
 
     def validator(self, func):
         if not callable(func):
@@ -97,8 +97,8 @@ class Factory:
             return self._default
 
     @property
-    def is_nothing(self):
-        return getattr(self, '_default', None) is NOTHING
+    def is_defined(self):
+        return getattr(self, '_default', None) is not NOTHING
 
 
 class _ClassBuilder:
