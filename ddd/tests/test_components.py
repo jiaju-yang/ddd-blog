@@ -50,6 +50,16 @@ class TestValueObject:
         avo = ChildVO(1, 2, 3, 4, 5, 6, 7, 8)
         assert tuple(avo) == (1, 2, 3, 4, 5, 6, 7, 8)
 
+    def test_annotation_instantiation(self):
+        class AVO(ValueObject):
+            a: int = Attr()
+            b: str = Attr()
+            c: str
+            d: int = 1
+
+        avo = AVO(1, 'x', 'y')
+        assert tuple(avo) == (1, 'x', 'y', 1)
+
     def test_default_attribute(self):
         class AVO(ValueObject):
             a = Attr()

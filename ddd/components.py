@@ -34,14 +34,11 @@ class Attr:
                  type=None,
                  default=NOTHING,
                  validator=None,
-                 hash=True):
-        self.type = type
-        self.default = Factory(default)
-
+                 hash=True,
+                 name=None):
         self.validators = []
-        if type:
-            self.validators.append(
-                lambda instance, value: isinstance(value, type))
+        self.type = type
+
         if isinstance(validator, (tuple, list)):
             for validate in validator:
                 if not callable(validate):
@@ -52,8 +49,9 @@ class Attr:
                 raise TypeError('Validator should be callable!')
             self.validators.append(validator)
 
+        self.default = Factory(default)
         self.hash = hash
-        self.name = None
+        self.name = name
 
     def __get__(self, instance, owner):
         if instance is None:
@@ -73,6 +71,17 @@ class Attr:
                     f"Incorrect value '{value}' for attribute '{self.name}' in "
                     f"'{instance.__class__.__name__}' object")
         instance.__dict__[self.name] = value
+
+    @property
+    def type(self):
+        return self._type
+
+    @type.setter
+    def type(self, type):
+        if type is not None:
+            self.validators.append(
+                lambda instance, value: isinstance(value, type))
+        self._type = type
 
     @property
     def is_required(self):
@@ -129,19 +138,32 @@ class _ModelMeta(type):
 
     @staticmethod
     def _traverse_attrs(cls):
+        annotations = getattr(cls, '__annotations__', {})
+        potential_attrs = {**annotations,
+                           **{key: value for key, value in cls.__dict__.items()
+                              if isinstance(value, Attr)}}
         attrs = []
         had_default = False
-        for name, attr in cls.__dict__.items():
-            if isinstance(attr, Attr):
-                if had_default and attr.is_required:
-                    raise ValueError(
-                        "No mandatory attributes allowed after an attribute "
-                        "with a default value or factory. Attribute in "
-                        f"question: {name}")
-                elif not had_default and not attr.is_required:
-                    had_default = True
+        for name, value in potential_attrs.items():
+            if isinstance(value, Attr):
+                attr = value
                 attr.name = name
-                attrs.append(attr)
+                if name in annotations:
+                    if attr.type is not None:
+                        raise ValueError(f"Duplicated type definition: {name}")
+                    attr.type = annotations[name]
+            else:
+                attr = Attr(name=name, type=annotations[name],
+                            default=cls.__dict__.get(name, NOTHING))
+            if had_default and attr.is_required:
+                raise ValueError(
+                    "No mandatory attributes allowed after an attribute "
+                    "with a default value or factory. Attribute in "
+                    f"question: {name}")
+            elif not had_default and not attr.is_required:
+                had_default = True
+            attrs.append(attr)
+
         return tuple(attrs)
 
 
