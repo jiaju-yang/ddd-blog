@@ -155,6 +155,7 @@ class _ModelMeta(type):
             else:
                 attr = Attr(name=name, type=annotations[name],
                             default=cls.__dict__.get(name, NOTHING))
+
             if had_default and attr.is_required:
                 raise ValueError(
                     "No mandatory attributes allowed after an attribute "
@@ -162,6 +163,12 @@ class _ModelMeta(type):
                     f"question: {name}")
             elif not had_default and not attr.is_required:
                 had_default = True
+
+            if (attr.type and attr.default.is_defined) and not isinstance(
+                    attr.default(), attr.type):
+                raise ValueError(
+                    f'Incorrect attribute type and default value: {attr.name}')
+
             attrs.append(attr)
 
         return tuple(attrs)

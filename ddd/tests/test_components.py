@@ -147,6 +147,15 @@ class TestValueObject:
         with pytest.raises(ValueError):
             AVO('x', 1)
 
+    def test_check_attr_type_of_default(self):
+        with pytest.raises(ValueError):
+            class AVO(ValueObject):
+                a = Attr(type=int, default='s')
+
+        with pytest.raises(ValueError):
+            class AVO(ValueObject):
+                a: int = 's'
+
     def test_hash(self):
         class AVO(ValueObject):
             a = Attr()
