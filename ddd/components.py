@@ -101,11 +101,20 @@ class Factory:
         return getattr(self, '_default', None) is not NOTHING
 
 
+class _Attrs:
+    def __init__(self, attrs):
+        self.all = tuple(attrs)
+
+    @property
+    def required(self):
+        return (a for a in self.all if a.is_required)
+
+
 class _ModelMeta(type):
     def __new__(mcs, typename, bases, attr_dict):
         cls = super().__new__(mcs, typename, bases, attr_dict)
         attrs = mcs._traverse_attrs(cls)
-        cls.__attrs__ = attrs
+        cls.__attrs__ = _Attrs(attrs)
         return cls
 
     @staticmethod
@@ -128,7 +137,7 @@ class _ModelMeta(type):
 
 class DomainModel(metaclass=_ModelMeta):
     def __init__(self, *args, **kwargs):
-        pos_args = {a.name: value for a, value in zip(self.__attrs__, args)}
+        pos_args = {a.name: value for a, value in zip(self.__attrs__.all, args)}
         all_args = {**pos_args, **kwargs}
 
         duplicated_args = set(pos_args.keys()) & set(kwargs.keys())
@@ -136,15 +145,16 @@ class DomainModel(metaclass=_ModelMeta):
             raise TypeError(f"__init__() got multiple values for argument "
                             f"'{', '.join(duplicated_args)}'")
 
-        missing_required_attrs = set(self._required_attrs()) - set(
-            all_args.keys())
+        missing_required_attrs = set(
+            a.name for a in self.__attrs__.required) - set(all_args.keys())
         if missing_required_attrs:
             raise TypeError(
                 f"__init__() missing {len(missing_required_attrs)} required "
                 f"positional argument: "
                 f"'{', '.join(missing_required_attrs)}'")
 
-        redundant_attrs = set(all_args) - set(a.name for a in self.__attrs__)
+        redundant_attrs = set(all_args) - set(
+            a.name for a in self.__attrs__.all)
         if redundant_attrs:
             raise TypeError(
                 f"__init__() got an unexpected keyword argument "
@@ -156,7 +166,7 @@ class DomainModel(metaclass=_ModelMeta):
 
     def __repr__(self):
         attrs_pair = []
-        for a in self.__attrs__:
+        for a in self.__attrs__.all:
             attrs_pair.append(('{}={}'.format(
                 a.name, repr(getattr(self, a.name, NOTHING)))))
         result = [self.__class__.__name__, '(', ', '.join(attrs_pair), ')']
@@ -164,7 +174,7 @@ class DomainModel(metaclass=_ModelMeta):
 
     def _asdict(self, **rename):
         result = {}
-        for a in self.__attrs__:
+        for a in self.__attrs__.all:
             value = getattr(self, a.name)
             name = rename.get(a.name) or a.name
             if isinstance(value, DomainModel):
@@ -174,16 +184,8 @@ class DomainModel(metaclass=_ModelMeta):
         return result
 
     def __iter__(self):
-        for a in self.__attrs__:
+        for a in self.__attrs__.all:
             yield getattr(self, a.name)
-
-    @classmethod
-    def _default_attrs(cls):
-        return tuple(a.name for a in cls.__attrs__ if not a.is_required)
-
-    @classmethod
-    def _required_attrs(cls):
-        return tuple(a.name for a in cls.__attrs__ if a.is_required)
 
 
 class Entity(DomainModel):
@@ -196,19 +198,19 @@ class ValueObject(DomainModel):
     def __eq__(self, other):
         if self.__class__ != other.__class__:
             return False
-        for a in self.__attrs__:
+        for a in self.__attrs__.all:
             if getattr(self, a.name) != getattr(other, a.name):
                 return False
         return True
 
     def __hash__(self):
-        hash_attr_names = (a.name for a in self.__attrs__ if a.hash)
+        hash_attr_names = (a.name for a in self.__attrs__.all if a.hash)
         hash_items = [self.__class__]
         for attr_name in hash_attr_names:
             hash_items.append(getattr(self, attr_name, NOTHING))
         return hash(tuple(hash_items))
 
     def _new(self, **kwargs):
-        new = {a.name: getattr(self, a.name) for a in self.__attrs__}
+        new = {a.name: getattr(self, a.name) for a in self.__attrs__.all}
         new.update(kwargs)
         return self.__class__(**new)
