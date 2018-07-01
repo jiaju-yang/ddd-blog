@@ -101,18 +101,11 @@ class Factory:
         return getattr(self, '_default', None) is not NOTHING
 
 
-class _ClassBuilder:
-    def __init__(self, cls):
-        self._cls = cls
-        self._attrs = self._traverse_attrs(cls)
-        self._cls_dict = {
-            '__attrs__': self._attrs,
-        }
-
-    def build_class(self):
-        cls = self._cls
-        for name, value in self._cls_dict.items():
-            setattr(cls, name, value)
+class _ModelMeta(type):
+    def __new__(mcs, typename, bases, attr_dict):
+        cls = super().__new__(mcs, typename, bases, attr_dict)
+        attrs = mcs._traverse_attrs(cls)
+        cls.__attrs__ = attrs
         return cls
 
     @staticmethod
@@ -131,13 +124,6 @@ class _ClassBuilder:
                 attr.name = name
                 attrs.append(attr)
         return tuple(attrs)
-
-
-class _ModelMeta(type):
-    def __new__(mcs, typename, bases, attr_dict):
-        cls = super().__new__(mcs, typename, bases, attr_dict)
-        builder = _ClassBuilder(cls)
-        return builder.build_class()
 
 
 class DomainModel(metaclass=_ModelMeta):
