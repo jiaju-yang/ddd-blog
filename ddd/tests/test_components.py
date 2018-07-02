@@ -2,7 +2,7 @@ import numbers
 
 import pytest
 
-from ddd import Attr, ValueObject
+from ddd import Attr, ValueObject, Entity
 
 
 class TestValueObject:
@@ -359,3 +359,25 @@ class TestValueObject:
 
         vo = ChildVO(1, 2, 3, 4, 5, 6, 7, 8)
         assert vo._attrs == ('a', 'b', 'c', 'd', 'e', 'f', 'g', 'h')
+
+
+class TestEntity:
+    def test_eq(self):
+        class AE(Entity):
+            id = Attr()
+            a = Attr()
+            b = Attr()
+
+        class AnotherE(Entity):
+            id = Attr()
+            a = Attr()
+            b = Attr()
+
+        e1 = AE(1, 'x', 'y')
+        e2 = AE(1, 'x', 'z')
+        e3 = AE(2, 'x', 'y')
+        another_e = AnotherE(1, 'x', 'y')
+
+        assert e1 == e2
+        assert e1 != e3
+        assert e1 != another_e

@@ -249,7 +249,10 @@ class DomainModel(metaclass=_ModelMeta):
 
 
 class Entity(DomainModel):
-    pass
+    def __eq__(self, other):
+        if self.__class__ != other.__class__:
+            return False
+        return self.id == other.id
 
 
 class ValueObject(DomainModel):
