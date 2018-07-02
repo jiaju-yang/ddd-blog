@@ -1,5 +1,7 @@
 from itertools import chain
 
+from .validators import instance_of
+
 __all__ = ('Attr', 'DomainModel', 'ValueObject', 'Entity')
 
 
@@ -35,10 +37,15 @@ class Attr:
                  default=NOTHING,
                  validator=None,
                  hash=True,
-                 name=None):
+                 name=None,
+                 allow_none=False):
+        self.name = name
+        self.allow_none = allow_none
+        self.hash = hash
+        self.default = Factory(default)
+
         self.validators = []
         self.type = type
-
         if isinstance(validator, (tuple, list)):
             for validate in validator:
                 if not callable(validate):
@@ -48,10 +55,6 @@ class Attr:
             if not callable(validator):
                 raise TypeError('Validator should be callable!')
             self.validators.append(validator)
-
-        self.default = Factory(default)
-        self.hash = hash
-        self.name = name
 
     def __get__(self, instance, owner):
         if instance is None:
@@ -79,8 +82,7 @@ class Attr:
     @type.setter
     def type(self, type):
         if type is not None:
-            self.validators.append(
-                lambda instance, value: isinstance(value, type))
+            self.validators.append(instance_of(type))
         self._type = type
 
     @property
