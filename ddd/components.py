@@ -1,6 +1,6 @@
 from itertools import chain
 
-from .validators import instance_of
+from .validators import instance_of, not_none
 
 __all__ = ('Attr', 'DomainModel', 'ValueObject', 'Entity')
 
@@ -45,6 +45,8 @@ class Attr:
         self.default = Factory(default)
 
         self.validators = []
+        if not allow_none:
+            self.validators.append(not_none)
         self.type = type
         if isinstance(validator, (tuple, list)):
             for validate in validator:
@@ -91,7 +93,7 @@ class Attr:
 
     def validator(self, func):
         if not callable(func):
-            raise TypeError()
+            raise TypeError('Validator should be callable!')
         self.validators.append(func)
         return func
 
@@ -141,9 +143,8 @@ class _ModelMeta(type):
     @staticmethod
     def _traverse_attrs(cls):
         annotations = getattr(cls, '__annotations__', {})
-        potential_attrs = {**annotations,
-                           **{key: value for key, value in cls.__dict__.items()
-                              if isinstance(value, Attr)}}
+        potential_attrs = {name: value for name, value in cls.__dict__.items()
+                           if isinstance(value, Attr) or name in annotations}
         attrs = []
         had_default = False
         for name, value in potential_attrs.items():

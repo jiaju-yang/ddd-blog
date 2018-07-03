@@ -52,13 +52,13 @@ class TestValueObject:
 
     def test_annotation_instantiation(self):
         class AVO(ValueObject):
-            a: int = Attr()
+            a = Attr()
             b: str = Attr()
-            c: str
-            d: int = 1
+            c: int = 1
 
-        avo = AVO(1, 'x', 'y')
-        assert tuple(avo) == (1, 'x', 'y', 1)
+        avo = AVO(1, 'x')
+        assert tuple(avo) == (1, 'x', 1)
+        assert avo._attrs == ('a', 'b', 'c')
 
     def test_default_attribute(self):
         class AVO(ValueObject):
@@ -128,6 +128,9 @@ class TestValueObject:
             AVO()
 
         with pytest.raises(TypeError):
+            AVO(b=1)
+
+        with pytest.raises(TypeError):
             AVO(b=1, c=1)
 
         with pytest.raises(TypeError):
@@ -155,6 +158,25 @@ class TestValueObject:
         with pytest.raises(ValueError):
             class AVO(ValueObject):
                 a: int = 's'
+
+    def test_allow_none(self):
+        class AVO(ValueObject):
+            a = Attr()
+            b = Attr(allow_none=True)
+            c: int = Attr(allow_none=True)
+            d: tuple = Attr(allow_none=True, default=tuple)
+
+        with pytest.raises(ValueError):
+            AVO(None, 1, 2)
+
+        avo = AVO(1, None, 2)
+        assert tuple(avo) == (1, None, 2, ())
+
+        avo = AVO(1, 2, None)
+        assert tuple(avo) == (1, 2, None, ())
+
+        avo = AVO(1, 2, 3, None)
+        assert tuple(avo) == (1, 2, 3, None)
 
     def test_hash(self):
         class AVO(ValueObject):
