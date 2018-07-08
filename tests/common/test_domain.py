@@ -6,18 +6,25 @@ from app.common.domain.models import Id
 
 
 class TestId:
-    def test_id_instantiation(self):
+    @pytest.fixture(scope='class')
+    def AId(self):
+        class AId(Id):
+            pass
+
+        return AId
+
+    def test_id_instantiation(self, AId):
         with pytest.raises(ValueError):
-            Id('a')
+            AId('a')
 
         with pytest.raises(ValueError):
-            Id(None)
+            AId(None)
 
-        id = Id(1)
-        assert id.value == 1
+        aid = AId(1)
+        assert aid.value == 1
 
     @patch('app.common.domain.models.generate_unique_id', side_effect=lambda: 1)
-    def test_next(self, _):
-        aid = Id.next()
-        another_id = Id(1)
+    def test_next(self, _, AId):
+        aid = AId.next()
+        another_id = AId(1)
         assert aid == another_id
