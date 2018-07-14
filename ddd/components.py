@@ -46,7 +46,7 @@ class Attr:
 
         self.validators = []
         if not allow_none:
-            self.validators.append(not_none)
+            self.validators.append(not_none())
         self.type = type
         if isinstance(validator, (tuple, list)):
             for validate in validator:

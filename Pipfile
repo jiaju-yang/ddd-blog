@@ -5,9 +5,10 @@ name = "pypi"
 
 [packages]
 flask = "*"
+flask-sqlalchemy = "*"
 
 [dev-packages]
-"flake8" = "*"
+flake8 = "*"
 pytest = "*"
 
 [requires]
