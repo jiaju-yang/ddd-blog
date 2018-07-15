@@ -257,6 +257,9 @@ class Entity(DomainModel):
             return False
         return self.id == other.id
 
+    def __hash__(self):
+        return hash(self.id)
+
 
 class ValueObject(DomainModel):
     __frozen__ = True
