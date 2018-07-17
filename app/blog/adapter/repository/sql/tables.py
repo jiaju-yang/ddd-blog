@@ -11,7 +11,6 @@ TagId.__composite_values__ = lambda self: (self.value,)
 
 db.mapper(Tag, tag, properties={
     'id': db.composite(TagId, tag.c.__id),
-    'name': tag.c.name
 })
 
 article = db.Table(
@@ -26,6 +25,7 @@ article = db.Table(
     db.Column('deleted_at', db.DateTime(timezone=True)),
 )
 
+ArticleId.__composite_values__ = lambda self: (self.value,)
 Author.__composite_values__ = lambda self: (self.id, self.name)
 
 tag_article_association = db.Table(

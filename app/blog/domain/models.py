@@ -29,6 +29,6 @@ class Article(Entity):
     content: str = Attr()
     author: Author = Attr()
     created_at: datetime = Attr()
-    updated_at: datetime = Attr()
-    deleted_at: datetime = Attr()
+    updated_at: datetime = Attr(allow_none=True)
+    deleted_at: datetime = Attr(allow_none=True)
     tags: List = Attr(default=list)

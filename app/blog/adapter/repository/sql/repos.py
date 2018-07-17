@@ -18,3 +18,7 @@ class SqlArticleRepo(ArticleRepo):
     def save(self, article: Article):
         db.session.merge(article)
         db.session.commit()
+
+    def recently_articles_of_page(self, page=0, page_count=10) -> List[Article]:
+        return db.session.query(Article).order_by(Article.created_at)[
+               page * page_count: (page + 1) * page_count]
