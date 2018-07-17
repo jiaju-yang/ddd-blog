@@ -58,25 +58,6 @@ class Attr:
                 raise TypeError('Validator should be callable!')
             self.validators.append(validator)
 
-    def __get__(self, instance, owner):
-        if instance is None:
-            return self
-        try:
-            return instance.__dict__[self.name]
-        except KeyError:
-            return self.default()
-
-    def __set__(self, instance, value):
-        if getattr(instance.__class__, '__frozen__', False) and \
-                getattr(instance, '__initialized__', False):
-            raise AttributeError('Can not set attribute!')
-        for validate in self.validators:
-            if not validate(instance, value):
-                raise ValueError(
-                    f"Incorrect value '{value}' for attribute '{self.name}' in "
-                    f"'{instance.__class__.__name__}' object")
-        instance.__dict__[self.name] = value
-
     @property
     def type(self):
         return self._type
@@ -118,19 +99,29 @@ class Factory:
 
 class _Attrs:
     def __init__(self, attrs=()):
-        self._all = tuple(attrs)
+        self._all = {a.name: a for a in attrs}
 
     @property
-    def required(self):
-        return tuple(a.name for a in self._all if a.is_required)
+    def required_attr_names(self):
+        return tuple(a.name for a in self._all.values() if a.is_required)
 
     @property
-    def all(self):
-        return tuple(a.name for a in self._all)
+    def all_attr_names(self):
+        return tuple(a.name for a in self._all.values())
 
     @property
-    def hash(self):
-        return tuple(a.name for a in self._all if a.hash)
+    def hash_attr_names(self):
+        return tuple(a.name for a in self._all.values() if a.hash)
+
+    @property
+    def has_default_attrs(self):
+        return tuple(a for a in self._all.values() if not a.is_required)
+
+    def __getitem__(self, item):
+        return self._all[item]
+
+    def get(self, key, default=None):
+        return self._all.get(key, default)
 
 
 class _ModelMeta(type):
@@ -138,6 +129,8 @@ class _ModelMeta(type):
         cls = super().__new__(mcs, typename, bases, attr_dict)
         attrs = mcs._traverse_attrs(cls)
         cls.__attrs__ = _Attrs(attrs)
+        for a in attrs:
+            delattr(cls, a.name)
         return cls
 
     @staticmethod
@@ -201,6 +194,11 @@ class DomainModel(metaclass=_ModelMeta):
                 f"__init__() got an unexpected keyword argument "
                 f"'{', '.join(tuple(redundant_attrs))}'")
 
+        has_default_attrs = self.__has_default_attrs
+        for a in has_default_attrs:
+            if a.name not in all_args:
+                all_args[a.name] = a.default()
+
         for key, value in all_args.items():
             setattr(self, key, value)
         self.__initialized__ = True
@@ -227,23 +225,43 @@ class DomainModel(metaclass=_ModelMeta):
     def __iter__(self):
         yield from (getattr(self, attr) for attr in self._attrs)
 
+    def __setattr__(self, key, value):
+        attr = next((ac[key] for ac in self.__attrs_containers()
+                     if ac.get(key)), None)
+        if attr:
+            if getattr(self.__class__, '__frozen__', False) and \
+                    getattr(self, '__initialized__', False):
+                raise AttributeError('Can not set attribute!')
+            for validate in attr.validators:
+                if not validate(self, value):
+                    raise ValueError(
+                        f"Incorrect value '{value}' for attribute '{attr.name}'"
+                        f" in '{self.__class__.__name__}' object")
+        super().__setattr__(key, value)
+
     @property
     def _attrs(self):
-        return tuple(chain.from_iterable(a.all
-                                         for a in self.__attr_descriptors()))
+        return self.__attrs_by_condition('all_attr_names')
 
     @property
     def _required_attrs(self):
-        return tuple(chain.from_iterable(a.required
-                                         for a in self.__attr_descriptors()))
+        return self.__attrs_by_condition('required_attr_names')
 
     @property
     def _hash_attrs(self):
-        return tuple(chain.from_iterable(a.hash
-                                         for a in self.__attr_descriptors()))
+        return self.__attrs_by_condition('hash_attr_names')
+
+    @property
+    def __has_default_attrs(self):
+        return self.__attrs_by_condition('has_default_attrs')
 
     @classmethod
-    def __attr_descriptors(cls):
+    def __attrs_by_condition(cls, condition):
+        return tuple(chain.from_iterable(getattr(ac, condition)
+                                         for ac in cls.__attrs_containers()))
+
+    @classmethod
+    def __attrs_containers(cls):
         none_attrs = _Attrs()
         return (
             getattr(cls, '__attrs__', none_attrs)
