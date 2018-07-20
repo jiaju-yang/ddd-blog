@@ -1,10 +1,13 @@
-from abc import abstractmethod, ABC
+from abc import abstractmethod
 from typing import List
 
+from ddd import Repo
 from .models import Tag, Article
 
 
-class TagRepo(ABC):
+class TagRepo(Repo):
+    __registry_name__ = 'tag'
+
     @abstractmethod
     def save(self, tag: Tag):
         pass
@@ -14,7 +17,9 @@ class TagRepo(ABC):
         pass
 
 
-class ArticleRepo(ABC):
+class ArticleRepo(Repo):
+    __registry_name__ = 'article'
+
     @abstractmethod
     def save(self, article: Article):
         pass

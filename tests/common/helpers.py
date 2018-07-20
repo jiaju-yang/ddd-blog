@@ -1,7 +1,7 @@
 import pytest
 
 from app import create_app
-from app.common.adapter.repository.sql import db
+from app.common.adapter.repositories.sql import db
 
 
 class FlaskAppEnvironment(object):

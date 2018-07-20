@@ -1,4 +1,4 @@
-from app.common.adapter.repository.sql import db
+from app.common.adapter.repositories.sql import db
 from ....domain.models import Author, Tag, TagId, Article, ArticleId
 
 tag = db.Table(

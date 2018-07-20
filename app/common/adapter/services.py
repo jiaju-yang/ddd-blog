@@ -23,3 +23,5 @@ class _IdGenerator:
 
 
 _id_generator = _IdGenerator()
+
+__all__ = ['generate_unique_id']

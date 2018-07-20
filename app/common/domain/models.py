@@ -1,5 +1,6 @@
 from ddd import ValueObject, Attr
-from ..adapter.services import generate_unique_id
+
+from .registries import services
 
 
 class Id(ValueObject):
@@ -7,4 +8,4 @@ class Id(ValueObject):
 
     @classmethod
     def next(cls):
-        return cls(generate_unique_id())
+        return cls(services.generate_unique_id())

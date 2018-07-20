@@ -2,7 +2,7 @@ from typing import List
 
 from app.blog.domain.models import Tag, Article
 from app.blog.domain.repos import TagRepo, ArticleRepo
-from app.common.adapter.repository.sql import db
+from app.common.adapter.repositories.sql import db
 
 
 class SqlTagRepo(TagRepo):

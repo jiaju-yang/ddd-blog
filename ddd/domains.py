@@ -138,3 +138,7 @@ class ValueObject(DomainModel):
 
 class Repo(abc.ABC):
     pass
+
+
+class Registry:
+    pass

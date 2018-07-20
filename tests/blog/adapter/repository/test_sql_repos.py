@@ -2,7 +2,7 @@ from typing import List
 
 import pytest
 
-from app.blog.adapter.repository.sql.repos import SqlTagRepo, SqlArticleRepo
+from app.blog.adapter.repositories.sql.repos import SqlTagRepo, SqlArticleRepo
 from tests.common.helpers import SqlEnvironment
 
 
