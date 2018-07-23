@@ -1,4 +1,5 @@
 from flask import Flask
+from flask_migrate import Migrate
 
 from config import config
 from flask_ddd import DDD
@@ -11,6 +12,7 @@ def create_app(config_name):
 
     db.init_app(app)
     DDD(app)
+    Migrate(app, db)
 
     from .blog.presentation import blog
     app.register_blueprint(blog)
