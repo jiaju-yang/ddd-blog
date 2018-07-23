@@ -23,7 +23,7 @@ class TestId:
         aid = AId(1)
         assert aid.value == 1
 
-    @patch('app.common.domain.models.generate_unique_id', side_effect=lambda: 1)
+    @patch('app.common.domain.registries.services.generate_unique_id', side_effect=lambda: 1)
     def test_next(self, _, AId):
         aid = AId.next()
         another_id = AId(1)
