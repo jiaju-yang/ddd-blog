@@ -25,5 +25,9 @@ class ArticleRepo(Repo):
         pass
 
     @abstractmethod
-    def recently_articles_of_page(self, page=0, page_count=10) -> List[Article]:
+    def recent_articles_of_page(self, page=0, page_count=10) -> List[Article]:
+        pass
+
+    @abstractmethod
+    def article(self, id):
         pass

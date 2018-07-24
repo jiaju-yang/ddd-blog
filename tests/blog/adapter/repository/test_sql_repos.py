@@ -51,7 +51,7 @@ class TestArticleRepo(SqlEnvironment):
 
     def test_save_one_article(self, repo, mock_article):
         repo.save(mock_article)
-        saved_articles = repo.recently_articles_of_page()
+        saved_articles = repo.recent_articles_of_page()
         assert len(saved_articles) == 1
         saved_article = saved_articles[0]
         assert saved_article.id == mock_article.id
@@ -68,7 +68,7 @@ class TestArticleRepo(SqlEnvironment):
         new_title = 'New Title'
         mock_article.title = new_title
         repo.save(mock_article)
-        saved_articles = repo.recently_articles_of_page()
+        saved_articles = repo.recent_articles_of_page()
         assert len(saved_articles) == 1
         assert saved_articles[0].id == mock_article.id
         assert saved_articles[0].title == new_title
@@ -76,17 +76,17 @@ class TestArticleRepo(SqlEnvironment):
     def test_save_two_articles(self, repo, mock_article, another_mock_article):
         repo.save(mock_article)
         repo.save(another_mock_article)
-        assert len(repo.recently_articles_of_page()) == 2
+        assert len(repo.recent_articles_of_page()) == 2
 
-    def test_recently_articles_of_page(
+    def test_recent_articles_of_page(
             self, repo, mock_article, another_mock_article):
         repo.save(mock_article)
         repo.save(another_mock_article)
-        saved_articles = repo.recently_articles_of_page(page=0, page_count=1)
+        saved_articles = repo.recent_articles_of_page(page=0, page_count=1)
         assert len(saved_articles) == 1
         assert isinstance(saved_articles, List)
         assert saved_articles[0].id == mock_article.id
 
-        saved_articles = repo.recently_articles_of_page(page=1, page_count=1)
+        saved_articles = repo.recent_articles_of_page(page=1, page_count=1)
         assert len(saved_articles) == 1
         assert saved_articles[0].id == another_mock_article.id
