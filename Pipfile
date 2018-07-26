@@ -8,11 +8,13 @@ flask = "*"
 flask-sqlalchemy = "*"
 alembic = "*"
 flask-migrate = "*"
+"pep8" = "*"
 
 [dev-packages]
 flake8 = "*"
 pytest = "*"
 pylint = "*"
+"autopep8" = "*"
 
 [requires]
 python_version = "3.6"
